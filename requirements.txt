@@ -2,6 +2,8 @@ Flask==3.1.0
 Flask-Cors==5.0.0
 ibm-watsonx-ai
 gunicorn==23.0.0  
+python-dotenv==1.0.1
+
 # if you later add RAG, embeddings, etc.
 # chromadb
 # sentence-transformers

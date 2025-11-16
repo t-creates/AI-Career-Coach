@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="page-header">
+  <h1>Welcome back 👋</h1>
+  <p class="page-subtitle">
+    This AI Career Coach helps you explore roles, polish resumes, craft cover letters, and chat about your next move —
+    all in one place.
+  </p>
+</div>
+
+<div class="card-grid">
+  <a href="{{ url_for('career_advisor_page') }}" class="feature-card">
+    <div class="feature-icon">
+      <i class="fa-solid fa-user-tie"></i>
+    </div>
+    <div class="feature-body">
+      <h2>Career Advisor</h2>
+      <p>Ask questions about roles, skills, or career direction and get tailored, conversational guidance.</p>
+    </div>
+  </a>
+
+  <a href="{{ url_for('cover_letter_page') }}" class="feature-card">
+    <div class="feature-icon">
+      <i class="fa-solid fa-file-pen"></i>
+    </div>
+    <div class="feature-body">
+      <h2>Cover Letter Studio</h2>
+      <p>Generate custom cover letters that match the job description and your resume, in seconds.</p>
+    </div>
+  </a>
+
+  <a href="{{ url_for('resume_polisher_page') }}" class="feature-card">
+    <div class="feature-icon">
+      <i class="fa-solid fa-file-alt"></i>
+    </div>
+    <div class="feature-body">
+      <h2>Resume Polisher</h2>
+      <p>Paste your resume and a job description to get a sharper, more targeted version.</p>
+    </div>
+  </a>
+
+  <a href="{{ url_for('chat_page') }}" class="feature-card">
+    <div class="feature-icon">
+      <i class="fa-solid fa-comments"></i>
+    </div>
+    <div class="feature-body">
+      <h2>General Chat</h2>
+      <p>Have an open-ended conversation about jobs, interviews, or anything career-related.</p>
+    </div>
+  </a>
+</div>
+{% endblock %}

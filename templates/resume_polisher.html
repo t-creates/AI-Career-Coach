@@ -1,0 +1,144 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="page-header">
+  <h1>Resume Polisher</h1>
+  <p class="page-subtitle">
+    Paste a job description and your resume to get a sharper, more targeted version aligned with the role.
+  </p>
+</div>
+
+<div class="two-column-layout">
+  <!-- LEFT: INPUTS -->
+  <section class="panel panel-inputs">
+    <h2 class="panel-title">Job Description & Resume</h2>
+
+    <label class="field-label" for="jobDescInput">Job Description</label>
+    <textarea id="jobDescInput" class="field-textarea" rows="7"
+      placeholder="Paste the job description here..."></textarea>
+
+    <label class="field-label" for="resumeInput">Your Resume</label>
+    <textarea id="resumeInput" class="field-textarea" rows="10"
+      placeholder="Paste your current resume here..."></textarea>
+
+    <button id="polishBtn" class="primary-btn">
+      <span id="polishBtnLabel">Polish Resume</span>
+      <span id="polishBtnSpinner" class="spinner" style="display:none;"></span>
+    </button>
+
+    <button id="clearBtn" class="secondary-btn">
+      Clear Inputs
+    </button>
+  </section>
+
+  <!-- RIGHT: CHAT HISTORY -->
+  <section class="panel panel-chat">
+    <h2 class="panel-title">Polisher Chat</h2>
+
+    <div id="chatHistory" class="chat-history">
+      <!-- Messages will be injected here -->
+    </div>
+
+    <p class="chat-hint">
+      Try different versions of your resume or tweak the job description to see how your polished version evolves over
+      time.
+    </p>
+  </section>
+</div>
+
+<script>
+  const polishBtn = document.getElementById("polishBtn");
+  const polishBtnLabel = document.getElementById("polishBtnLabel");
+  const polishBtnSpinner = document.getElementById("polishBtnSpinner");
+  const clearBtn = document.getElementById("clearBtn");
+  const chatHistory = document.getElementById("chatHistory");
+
+  function addMessage(role, text, meta = "") {
+    const wrapper = document.createElement("div");
+    wrapper.classList.add("chat-message", role === "user" ? "chat-message-user" : "chat-message-assistant");
+
+    if (meta) {
+      const metaEl = document.createElement("div");
+      metaEl.classList.add("chat-message-meta");
+      metaEl.textContent = meta;
+      wrapper.appendChild(metaEl);
+    }
+
+    const body = document.createElement("div");
+    body.classList.add("chat-message-body");
+    body.textContent = text;
+    wrapper.appendChild(body);
+
+    chatHistory.appendChild(wrapper);
+    chatHistory.scrollTop = chatHistory.scrollHeight;
+  }
+
+  function setLoading(isLoading) {
+    polishBtn.disabled = isLoading;
+    polishBtnLabel.textContent = isLoading ? "Polishing..." : "Polish Resume";
+    polishBtnSpinner.style.display = isLoading ? "inline-block" : "none";
+  }
+
+  polishBtn.addEventListener("click", async () => {
+    const jobDesc = document.getElementById("jobDescInput").value.trim();
+    const resume = document.getElementById("resumeInput").value.trim();
+
+    if (!jobDesc && !resume) {
+      addMessage("assistant", "Please paste at least a job description or your resume so I have something to improve.");
+      return;
+    }
+
+    // User bubble content & meta
+    const metaSummary = jobDesc ? "Polish for this job description" : "Polish current resume";
+
+    const preview =
+      jobDesc.slice(0, 120) +
+      (jobDesc.length > 120 ? "..." : "") +
+      (jobDesc && resume ? " | " : "") +
+      resume.slice(0, 80) +
+      (resume.length > 80 ? "..." : "");
+
+    const userText =
+      preview || "Please polish my resume to better match this role.";
+
+    addMessage("user", userText, metaSummary);
+
+    setLoading(true);
+
+    try {
+      const response = await fetch("/api/resume-polisher", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          job_description: jobDesc,
+          resume_content: resume,
+        }),
+      });
+
+      if (!response.ok) {
+        addMessage("assistant", "Something went wrong while contacting the resume polisher API.");
+        setLoading(false);
+        return;
+      }
+
+      const data = await response.json();
+      const polished = data.polished_resume || "I couldn't generate a polished resume this time.";
+
+      addMessage("assistant", polished, "Polished Resume");
+    } catch (err) {
+      console.error(err);
+      addMessage("assistant", "Network error while trying to reach the resume polisher. Please try again.");
+    } finally {
+      setLoading(false);
+    }
+  });
+
+  clearBtn.addEventListener("click", () => {
+    document.getElementById("jobDescInput").value = "";
+    document.getElementById("resumeInput").value = "";
+    chatHistory.innerHTML = "";
+
+    clearBtn.textContent = "Cleared!";
+    setTimeout(() => (clearBtn.textContent = "Clear Inputs"), 900);
+  });
+</script>
+{% endblock %}

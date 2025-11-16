@@ -1,0 +1,156 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="page-header">
+  <h1>Career Advisor</h1>
+  <p class="page-subtitle">
+    Paste the role and your resume, then generate tailored advice. You can tweak your inputs and ask for new feedback as
+    you go.
+  </p>
+</div>
+
+<div class="two-column-layout">
+  <!-- LEFT: INPUTS -->
+  <section class="panel panel-inputs">
+    <h2 class="panel-title">Role & Resume</h2>
+
+    <label class="field-label" for="positionInput">Position / Role</label>
+    <input id="positionInput" class="field-input" type="text" placeholder="e.g. Senior Backend Engineer" />
+
+    <label class="field-label" for="jobDescInput">Job Description</label>
+    <textarea id="jobDescInput" class="field-textarea" rows="6"
+      placeholder="Paste the job description here..."></textarea>
+
+    <label class="field-label" for="resumeInput">Your Resume</label>
+    <textarea id="resumeInput" class="field-textarea" rows="8" placeholder="Paste your resume here..."></textarea>
+
+    <button id="adviseBtn" class="primary-btn">
+      <span id="adviseBtnLabel">Get Career Advice</span>
+      <span id="adviseBtnSpinner" class="spinner" style="display:none;"></span>
+    </button>
+
+    <button id="clearBtn" class="secondary-btn">
+      Clear Inputs
+    </button>
+
+  </section>
+
+  <!-- RIGHT: CHAT HISTORY -->
+  <section class="panel panel-chat">
+    <h2 class="panel-title">Advisor Chat</h2>
+
+    <div id="chatHistory" class="chat-history">
+      <!-- Messages will be injected here -->
+    </div>
+
+    <p class="chat-hint">
+      Each time you click <strong>Get Career Advice</strong>, a new exchange will appear here.
+      Update the job or resume and ask again to see how your chances improve.
+    </p>
+  </section>
+</div>
+
+<script>
+  const adviseBtn = document.getElementById("adviseBtn");
+  const adviseBtnLabel = document.getElementById("adviseBtnLabel");
+  const adviseBtnSpinner = document.getElementById("adviseBtnSpinner");
+  const chatHistory = document.getElementById("chatHistory");
+
+  function addMessage(role, text, meta = "") {
+    const wrapper = document.createElement("div");
+    wrapper.classList.add("chat-message", role === "user" ? "chat-message-user" : "chat-message-assistant");
+
+    if (meta) {
+      const metaEl = document.createElement("div");
+      metaEl.classList.add("chat-message-meta");
+      metaEl.textContent = meta;
+      wrapper.appendChild(metaEl);
+    }
+
+    const body = document.createElement("div");
+    body.classList.add("chat-message-body");
+    body.textContent = text;
+    wrapper.appendChild(body);
+
+    chatHistory.appendChild(wrapper);
+    chatHistory.scrollTop = chatHistory.scrollHeight;
+  }
+
+  function setLoading(isLoading) {
+    adviseBtn.disabled = isLoading;
+    adviseBtnLabel.textContent = isLoading ? "Thinking..." : "Get Career Advice";
+    adviseBtnSpinner.style.display = isLoading ? "inline-block" : "none";
+  }
+
+  adviseBtn.addEventListener("click", async () => {
+    const position = document.getElementById("positionInput").value.trim();
+    const jobDesc = document.getElementById("jobDescInput").value.trim();
+    const resume = document.getElementById("resumeInput").value.trim();
+
+    if (!position && !jobDesc && !resume) {
+      addMessage("assistant", "Please add at least a job description or resume so I have something to analyze.");
+      return;
+    }
+
+    // Create a short meta summary for the user bubble
+    const metaSummaryParts = [];
+    if (position) metaSummaryParts.push(position);
+    const metaSummary = metaSummaryParts.join(" — ") || "Career advice request";
+
+    const preview =
+      jobDesc.slice(0, 120) +
+      (jobDesc.length > 120 ? "..." : "") +
+      (jobDesc && resume ? " | " : "") +
+      resume.slice(0, 80) +
+      (resume.length > 80 ? "..." : "");
+
+    const userText = preview || "Analyze my current inputs and give me targeted advice.";
+
+    addMessage("user", userText, metaSummary);
+
+    setLoading(true);
+
+    try {
+      const response = await fetch("/api/career-advice", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          position_applied: position,
+          job_description: jobDesc,
+          resume_content: resume,
+        }),
+      });
+
+      if (!response.ok) {
+        addMessage("assistant", "Something went wrong while contacting the advisor API.");
+        setLoading(false);
+        return;
+      }
+
+      const data = await response.json();
+      const advice = data.advice || "I couldn't generate any advice this time.";
+
+      addMessage("assistant", advice, "Advisor");
+    } catch (err) {
+      console.error(err);
+      addMessage("assistant", "Network error while trying to reach the advisor. Please try again.");
+    } finally {
+      setLoading(false);
+    }
+  });
+  const clearBtn = document.getElementById("clearBtn");
+
+  clearBtn.addEventListener("click", () => {
+    // Clear text inputs
+    document.getElementById("positionInput").value = "";
+    document.getElementById("jobDescInput").value = "";
+    document.getElementById("resumeInput").value = "";
+
+    // Clear chat UI
+    chatHistory.innerHTML = "";
+
+    // Optional tiny UX flash
+    clearBtn.textContent = "Cleared!";
+    setTimeout(() => (clearBtn.textContent = "Clear Inputs"), 900);
+  });
+</script>
+{% endblock %}

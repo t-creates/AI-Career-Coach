@@ -1,0 +1,109 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="page-header">
+  <h1>General Chat</h1>
+  <p class="page-subtitle">
+    Ask anything about careers, interviews, skills, or job search. This is your open-ended AI career chat.
+  </p>
+</div>
+
+<div class="chat-page-layout">
+  <section class="panel panel-chat chat-panel-main">
+    <div id="chatHistory" class="chat-history">
+      <!-- Messages will appear here -->
+    </div>
+
+    <div class="chat-input-row">
+      <button id="clearChatBtn" class="secondary-btn chat-clear-btn" type="button">
+        Clear
+      </button>
+      <div class="chat-input-bar">
+        <textarea id="chatInput" class="chat-input" rows="1"
+          placeholder="Ask me anything about your career, interviews, or job search..."></textarea>
+        <button id="sendBtn" class="primary-btn chat-send-btn" type="button">
+          <span id="sendBtnLabel">Send</span>
+          <span id="sendBtnSpinner" class="spinner" style="display:none;"></span>
+        </button>
+      </div>
+    </div>
+  </section>
+</div>
+
+<script>
+  const chatHistory = document.getElementById("chatHistory");
+  const chatInput = document.getElementById("chatInput");
+  const sendBtn = document.getElementById("sendBtn");
+  const sendBtnLabel = document.getElementById("sendBtnLabel");
+  const sendBtnSpinner = document.getElementById("sendBtnSpinner");
+  const clearChatBtn = document.getElementById("clearChatBtn");
+
+  function addMessage(role, text) {
+    const wrapper = document.createElement("div");
+    wrapper.classList.add("chat-message", role === "user" ? "chat-message-user" : "chat-message-assistant");
+
+    const body = document.createElement("div");
+    body.classList.add("chat-message-body");
+    body.textContent = text;
+    wrapper.appendChild(body);
+
+    chatHistory.appendChild(wrapper);
+    chatHistory.scrollTop = chatHistory.scrollHeight;
+  }
+
+  function setLoading(isLoading) {
+    sendBtn.disabled = isLoading;
+    sendBtnLabel.textContent = isLoading ? "Sending..." : "Send";
+    sendBtnSpinner.style.display = isLoading ? "inline-block" : "none";
+  }
+
+  async function sendMessage() {
+    const text = chatInput.value.trim();
+    if (!text) return;
+
+    addMessage("user", text);
+    chatInput.value = "";
+    chatInput.focus();
+
+    setLoading(true);
+
+    try {
+      const res = await fetch("/api/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ message: text }),
+      });
+
+      if (!res.ok) {
+        addMessage("assistant", "Something went wrong while contacting the chat service.");
+        setLoading(false);
+        return;
+      }
+
+      const data = await res.json();
+      const reply = data.reply || "I couldn't generate a response this time.";
+      addMessage("assistant", reply);
+    } catch (err) {
+      console.error(err);
+      addMessage("assistant", "Network error while trying to reach the chat service. Please try again.");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  sendBtn.addEventListener("click", sendMessage);
+
+  // Enter to send, Shift+Enter for newline
+  chatInput.addEventListener("keydown", (e) => {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      sendMessage();
+    }
+  });
+
+  clearChatBtn.addEventListener("click", () => {
+    chatHistory.innerHTML = "";
+    clearChatBtn.textContent = "Cleared!";
+    setTimeout(() => (clearChatBtn.textContent = "Clear"), 900);
+  });
+</script>
+{% endblock %}

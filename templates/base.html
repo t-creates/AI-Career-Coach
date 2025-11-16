@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8" />
+  <title>{{ title or "AI Career Coach" }}</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <!-- Optional: Google Font -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
+
+  <!-- Icons (Font Awesome) -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
+    crossorigin="anonymous" referrerpolicy="no-referrer" />
+
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}" />
+</head>
+
+<body>
+  <div class="app-shell">
+    <!-- SIDEBAR -->
+    <aside class="sidebar">
+      <div class="sidebar-header">
+        <div class="logo-circle">AI</div>
+        <div class="sidebar-title">
+          <div class="sidebar-title-main">Career Coach</div>
+          <div class="sidebar-title-sub">Your AI job copilot</div>
+        </div>
+      </div>
+
+      <nav class="sidebar-nav">
+        <a href="{{ url_for('index') }}" class="nav-item {% if request.path == '/' %}nav-item-active{% endif %}">
+          <i class="fa-solid fa-house"></i>
+          <span>Overview</span>
+        </a>
+        <a href="{{ url_for('career_advisor_page') }}"
+          class="nav-item {% if '/career-advisor' in request.path %}nav-item-active{% endif %}">
+          <i class="fa-solid fa-user-tie"></i>
+          <span>Career Advisor</span>
+        </a>
+        <a href="{{ url_for('cover_letter_page') }}"
+          class="nav-item {% if '/cover-letter' in request.path %}nav-item-active{% endif %}">
+          <i class="fa-solid fa-file-pen"></i>
+          <span>Cover Letter</span>
+        </a>
+        <a href="{{ url_for('resume_polisher_page') }}"
+          class="nav-item {% if '/resume-polisher' in request.path %}nav-item-active{% endif %}">
+          <i class="fa-solid fa-file-alt"></i>
+          <span>Resume Polisher</span>
+        </a>
+        <a href="{{ url_for('chat_page') }}"
+          class="nav-item {% if '/chat' in request.path %}nav-item-active{% endif %}">
+          <i class="fa-solid fa-comments"></i>
+          <span>General Chat</span>
+        </a>
+      </nav>
+
+      <div class="sidebar-footer">
+        <span class="sidebar-footer-text">Built with Flask & watsonx</span>
+      </div>
+    </aside>
+
+    <!-- MAIN CONTENT -->
+    <main class="main-content">
+      {% block content %}{% endblock %}
+    </main>
+  </div>
+</body>
+
+</html>
